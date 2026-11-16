@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>For Nihal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;1,300;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #1a1030;
+    --plum: #3a1b52;
+    --rose: #f4b6c8;
+    --pearl: #fff4f0;
+    --gold: #e8c08a;
+    --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--serif);
+    color: var(--pearl);
+    background:
+      radial-gradient(60vmax 60vmax at 80% 10%, rgba(244,182,200,.22), transparent 60%),
+      radial-gradient(70vmax 70vmax at 10% 100%, rgba(232,192,138,.12), transparent 60%),
+      linear-gradient(160deg, var(--plum), var(--night) 70%);
+    overflow: hidden;
+  }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  main {
+    position: relative; z-index: 1; min-height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 2rem 1.5rem;
+    padding-top: calc(2rem + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+  }
+  h1 {
+    font-weight: 300; font-style: italic;
+    font-size: clamp(3.5rem, 14vw, 9rem); line-height: 1; letter-spacing: .01em;
+    color: var(--rose);
+    text-shadow: 0 0 40px rgba(244,182,200,.35);
+  }
+  .hint {
+    margin-top: 1.25rem; font-size: clamp(1.1rem, 3.2vw, 1.5rem);
+    font-weight: 300; color: rgba(255,244,240,.78); max-width: 26ch;
+  }
+  .clock { display: flex; gap: clamp(1rem, 5vw, 3rem); margin-top: 3rem; }
+  .unit { min-width: 4.2ch; }
+  .num {
+    display: block; font-weight: 500; font-variant-numeric: tabular-nums;
+    font-size: clamp(2.6rem, 10vw, 5.5rem); line-height: 1; color: var(--pearl);
+  }
+  .lbl { display: block; margin-top: .5rem; font-style: italic; font-size: 1.05rem; color: var(--gold); }
+  .message {
+    font-weight: 300; font-style: italic;
+    font-size: clamp(2.6rem, 11vw, 7rem); line-height: 1.12; max-width: 14ch; color: var(--pearl);
+    text-shadow: 0 0 60px rgba(244,182,200,.5);
+  }
+  .message span {
+    display: inline-block; opacity: 0; transform: translateY(.4em); filter: blur(8px);
+    animation: bloom 1.6s ease-out forwards;
+  }
+  .sign { margin-top: 2.5rem; font-size: 1.3rem; color: var(--gold); opacity: 0; animation: bloom 2s 3.2s ease-out forwards; }
+  @keyframes bloom { to { opacity: 1; transform: none; filter: none; } }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) {
+    .message span, .sign { animation-duration: .01s; animation-delay: 0s !important; }
+  }
+</style>
+</head>
+<body>
+<canvas id="petals" aria-hidden="true"></canvas>
+
+<main>
+  <section id="locked">
+    <h1>Nihal</h1>
+    <p class="hint">Something is waiting for you on October 16.</p>
+    <div class="clock" role="timer" aria-live="off">
+      <div class="unit"><span class="num" id="d">0</span><span class="lbl">days</span></div>
+      <div class="unit"><span class="num" id="h">0</span><span class="lbl">hours</span></div>
+      <div class="unit"><span class="num" id="m">0</span><span class="lbl">minutes</span></div>
+      <div class="unit"><span class="num" id="s">0</span><span class="lbl">seconds</span></div>
+    </div>
+  </section>
+
+  <section id="open" hidden>
+    <p class="message" id="msg"></p>
+    <p class="sign" id="sign"></p>
+  </section>
+</main>
+
+<script>
+  // ---- Edit these two lines ----
+  const MESSAGE = "Nihal, you are special to me , may all your dreams come true may allah bless you i know you with short time but i will always be here for you this gift is for you from abdurahman developed in november 16 2026.";
+  const SIGNATURE = "Happy October 16.";
+  // ------------------------------
+
+  const MONTH = 9, DAY = 16; // October 16 (months start at 0)
+  const preview = new URLSearchParams(location.search).has("open"); // add ?open to test the reveal
+
+  const $ = (id) => document.getElementById(id);
+  let revealed = false;
+
+  function state() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const start = new Date(y, MONTH, DAY);
+    const end = new Date(y, MONTH, DAY + 1);
+    if (preview || (now >= start && now < end)) return { open: true };
+    return { open: false, target: now < start ? start : new Date(y + 1, MONTH, DAY), now };
+  }
+
+  function reveal() {
+    if (revealed) return;
+    revealed = true;
+    $("locked").hidden = true;
+    $("open").hidden = false;
+    const words = MESSAGE.split(" ");
+    $("msg").innerHTML = words.map((w, i) =>
+      '<span style="animation-delay:' + (0.4 + i * 0.7) + 's">' + w.replace(/</g, "&lt;") + "&nbsp;</span>").join("");
+    $("sign").textContent = SIGNATURE;
+    petalCount = 70;
+  }
+
+  function tick() {
+    const st = state();
+    if (st.open) { reveal(); return; }
+    let diff = Math.max(0, st.target - st.now);
+    const day = 86400000, hr = 3600000, min = 60000;
+    $("d").textContent = Math.floor(diff / day);
+    $("h").textContent = String(Math.floor((diff % day) / hr)).padStart(2, "0");
+    $("m").textContent = String(Math.floor((diff % hr) / min)).padStart(2, "0");
+    $("s").textContent = String(Math.floor((diff % min) / 1000)).padStart(2, "0");
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // ---- Falling petals ----
+  const cv = $("petals"), ctx = cv.getContext("2d");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let petalCount = 22, petals = [], W, H;
+
+  function size() {
+    const r = devicePixelRatio || 1;
+    W = innerWidth; H = innerHeight;
+    cv.width = W * r; cv.height = H * r;
+    ctx.setTransform(r, 0, 0, r, 0, 0);
+  }
+  addEventListener("resize", size);
+  size();
+
+  function make(initial) {
+    return {
+      x: Math.random() * W, y: initial ? Math.random() * H : -20,
+      s: 6 + Math.random() * 10, v: .3 + Math.random() * .7,
+      sw: Math.random() * Math.PI * 2, r: Math.random() * Math.PI * 2,
+      vr: (Math.random() - .5) * .02, a: .25 + Math.random() * .45
+    };
+  }
+
+  function frame() {
+    ctx.clearRect(0, 0, W, H);
+    while (petals.length < petalCount) petals.push(make(true));
+    for (const p of petals) {
+      p.y += p.v; p.sw += .01; p.r += p.vr;
+      p.x += Math.sin(p.sw) * .6;
+      if (p.y > H + 20) Object.assign(p, make(false));
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.r);
+      ctx.globalAlpha = p.a;
+      ctx.fillStyle = "#f4b6c8";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, p.s, p.s * .55, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    if (!reduce) requestAnimationFrame(frame);
+  }
+  frame();
+</script>
+</body>
+</html>
